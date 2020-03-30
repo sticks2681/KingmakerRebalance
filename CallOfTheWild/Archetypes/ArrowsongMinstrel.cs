@@ -49,6 +49,7 @@ using Kingmaker.Utility;
 using static Kingmaker.UnitLogic.ActivatableAbilities.ActivatableAbilityResourceLogic;
 using static Kingmaker.UnitLogic.Commands.Base.UnitCommand;
 
+
 namespace CallOfTheWild.Archetypes
 {
     public class ArrowsongMinstrel
@@ -79,7 +80,7 @@ namespace CallOfTheWild.Archetypes
 			createSpellbook();
 			
             all_around_vision = library.CopyAndAdd<BlueprintFeature>("3248db42de0649040a9f9c1ae035641c", "ArmathorAllAroundVision", "");
-            all_around_vision.SetNameDescription("All-Around Visoin", "Can see in all directions at once and cannot be flanked.");
+            all_around_vision.SetNameDescription("All-Around Vision", "Can see in all directions at once and cannot be flanked.");
             
 			awareness = library.CopyAndAdd<BlueprintFeature>("236ec7f226d3d784884f066aa4be1570", "ArmathorAwareness", "");
             awareness.SetNameDescription("Preternatural Senses", "Senses so refined that they make invisibility and concealment (even magical darkness) irrelevant.");
@@ -118,21 +119,6 @@ namespace CallOfTheWild.Archetypes
             leaders_words.ReplaceComponent<ContextRankConfig>(c => Helpers.SetField(c, "m_Class", getArmathorArray()));
 			
             stalwart = library.CopyAndAdd<BlueprintFeature>("ec9dbc9a5fa26e446a54fe5df6779088", "ArmathorStalwart", "");
-
-            var ac_bonus = library.CopyAndAdd<BlueprintFeature>("e241bdfd6333b9843a7bfd674d607ac4", "ACBonusArmathorACBonusFeature", "");
-            ac_bonus.SetDescription("When unarmored and unencumbered, an Armathor adds their Wisdom bonus (if any) to their AC and CMD. In addition, an armathor gains a +1 bonus to AC and CMD at 4th level. This bonus increases by 1 for every four Armathor levels thereafter, up to a maximum of +5 at 20th level.");
-            foreach (var c in ac_bonus.GetComponents<ContextRankConfig>().ToArray())
-            {
-                if (c.IsBasedOnClassLevel)
-                {
-                    var new_c = c.CreateCopy();
-                    Helpers.SetField(new_c, "m_Class", getArmathorArray());
-                    ac_bonus.ReplaceComponent(c, new_c);
-                    break;
-                }
-            }
-
-            var unlock_ac_bonus = Common.createMonkFeatureUnlock(ac_bonus, false);
 			
             archetype = Helpers.Create<BlueprintArchetype>(a =>
             {
@@ -146,7 +132,7 @@ namespace CallOfTheWild.Archetypes
                                                           Helpers.LevelEntry(11, library.Get<BlueprintFeature>("9f13fdd044ccb8a439f27417481cb00e")), //mark of justice
                                                        };
             archetype.ReplaceSpellbook = spellbook;
-            archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, armathor_cantrips, fighter_feat, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement, uncanny_dodge, stern_gaze, leaders_words, unlock_ac_bonus, library.Get<BlueprintFeature>("54ee847996c25cd4ba8773d7b8555174")),
+            archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, armathor_cantrips, fighter_feat, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement, uncanny_dodge, stern_gaze, leaders_words, library.Get<BlueprintFeature>("54ee847996c25cd4ba8773d7b8555174"), library.Get<BlueprintFeature>("d09b20029e9abfe4480b356c92095623")),
                                                        Helpers.LevelEntry(2, fighter_feat),
                                                        Helpers.LevelEntry(4, fighter_feat),
                                                        Helpers.LevelEntry(5, evasion, improved_uncanny_dodge, stalwart),
@@ -182,7 +168,7 @@ namespace CallOfTheWild.Archetypes
             paladin_class.Progression.UIGroups[8].Features.Add(improved_uncanny_dodge);*/
 
             paladin_class.Progression.UIDeterminatorsGroup = paladin_class.Progression.UIDeterminatorsGroup.AddToArray(armathor_cantrips, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement);
-            paladin_class.Progression.UIGroups = paladin_class.Progression.UIGroups.AddToArray(Helpers.CreateUIGroup(fighter_feat, uncanny_dodge, stern_gaze, leaders_words, evasion, improved_uncanny_dodge, improved_evasion, stalwart, unlock_ac_bonus));
+            paladin_class.Progression.UIGroups = paladin_class.Progression.UIGroups.AddToArray(Helpers.CreateUIGroup(fighter_feat, uncanny_dodge, stern_gaze, leaders_words, evasion, improved_uncanny_dodge, improved_evasion, stalwart));
             paladin_class.Archetypes = paladin_class.Archetypes.AddToArray(archetype);
 
             archetype.ReplaceClassSkills = true;
@@ -256,17 +242,6 @@ namespace CallOfTheWild.Archetypes
             }
             spellbook.SpellList.SpellsByLevel[0].SpellLevel = 0;
 
-            BlueprintAbility[] extra_spells = new BlueprintAbility[]
-            {
-                 library.Get<BlueprintAbility>("9f10909f0be1f5141bf1c102041f93d9"), //snow ball
-                 library.Get<BlueprintAbility>("3e9d1119d43d07c4c8ba9ebfd1671952"), //gravity bow
-                 library.Get<BlueprintAbility>("2c38da66e5a599347ac95b3294acbe00"), //true strike
-                 NewSpells.magic_weapon,
-                 NewSpells.magic_weapon_greater,
-                 library.Get<BlueprintAbility>("c28de1f98a3f432448e52e5d47c73208"), //protection from arrows
-                 library.Get<BlueprintAbility>("9a46dfd390f943647ab4395fc997936d"), //acid arrow
-                 NewSpells.flame_arrow
-            };
             //add cleric spells      
             foreach (var spell_level_list in cleric_class.Spellbook.SpellList.SpellsByLevel)
             {
