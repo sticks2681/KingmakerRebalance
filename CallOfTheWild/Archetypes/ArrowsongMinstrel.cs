@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,7 +12,6 @@ using Kingmaker.Blueprints.Facts;
 using Kingmaker.Blueprints.Items.Armors;
 using Kingmaker.Blueprints.Items.Ecnchantments;
 using Kingmaker.Blueprints.Items.Equipment;
-using Kingmaker.Blueprints.Items.Shields;
 using Kingmaker.Blueprints.Items.Weapons;
 using Kingmaker.Designers.EventConditionActionSystem.Actions;
 using Kingmaker.Designers.Mechanics.Buffs;
@@ -49,7 +48,6 @@ using Kingmaker.Utility;
 using static Kingmaker.UnitLogic.ActivatableAbilities.ActivatableAbilityResourceLogic;
 using static Kingmaker.UnitLogic.Commands.Base.UnitCommand;
 
-
 namespace CallOfTheWild.Archetypes
 {
     public class ArrowsongMinstrel
@@ -57,182 +55,191 @@ namespace CallOfTheWild.Archetypes
         static public BlueprintArchetype archetype;
         static public BlueprintSpellbook spellbook;
 
-        static public BlueprintFeature all_around_vision;
-        static public BlueprintFeature awareness;
-        static public BlueprintFeature armathor_cantrips;
-        static public BlueprintFeatureSelection fighter_feat;
-        static public BlueprintFeature perfect_memory;
-        static public BlueprintFeature jack_of_all_trades;
-        static public BlueprintFeature fast_movement;
-        static public BlueprintFeature uncanny_dodge;
-        static public BlueprintFeature improved_uncanny_dodge;
-        static public BlueprintFeature stern_gaze;
-        static public BlueprintFeature leaders_words;
-        static public BlueprintFeature stalwart;
-		
-		static LibraryScriptableObject library => Main.library;
+        static public BlueprintBuff precise_minstrel_no_cover_buff;
+
+        static public BlueprintFeature precise_minstrel;
+        static public BlueprintFeature arrowsong_strike;
+        static public BlueprintFeature arcane_achery;
+        static public BlueprintFeature weapon_proficiency;
+
+        static LibraryScriptableObject library => Main.library;
 
 
         internal static void create()
         {
-            var paladin_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("bfa11238e7ae3544bbeb4d0b92e897ec"); //Changed to Paladin class
-            
-			createSpellbook();
-			
-            all_around_vision = library.CopyAndAdd<BlueprintFeature>("3248db42de0649040a9f9c1ae035641c", "ArmathorAllAroundVision", "");
-            all_around_vision.SetNameDescription("All-Around Vision", "Can see in all directions at once and cannot be flanked.");
-            
-			awareness = library.CopyAndAdd<BlueprintFeature>("236ec7f226d3d784884f066aa4be1570", "ArmathorAwareness", "");
-            awareness.SetNameDescription("Preternatural Senses", "Senses so refined that they make invisibility and concealment (even magical darkness) irrelevant.");
-            
-			fighter_feat = library.CopyAndAdd<BlueprintFeatureSelection>("41c8486641f7d6d4283ca9dae4147a9f", "ArmathorBonusFeat", "");
-            fighter_feat.SetDescription("At 1st level and every even level thereafter, an Armathor gains a bonus feat in addition to those gained from normal advancement. These bonus feats must be selected from those listed as combat feats.");
-            
-			armathor_cantrips = library.CopyAndAdd<BlueprintFeature>("c58b36ec3f759c84089c67611d1bcc21", "ArmathorCantrips", "");
-            armathor_cantrips.SetNameDescription("Armathor Orisons",
-                                                 "An Armathor can cast a number of orisons, or 0-level spells. These are cast like any other spell, but they are not expended when cast and may be used again.");
-            armathor_cantrips.ReplaceComponent<LearnSpells>(l => l.CharacterClass = paladin_class);
-            armathor_cantrips.ReplaceComponent<BindAbilitiesToClass>(b => { b.CharacterClass = paladin_class; b.Stat = StatType.Wisdom; });
-            
-			perfect_memory = library.CopyAndAdd<BlueprintFeature>("65cff8410a336654486c98fd3bacd8c5", "ArmathorPerfectMemory", "");
-            perfect_memory.SetNameDescription("Perfect Memory", "The ability to perfectly recall anything seen or read allows the Armathor to add half his class level (minimum 1) to all Knowledge and Lore skill checks and may make all Knowledge and Lore skill checks untrained.");
-            perfect_memory.ReplaceComponent<ContextRankConfig>(c => Helpers.SetField(c, "m_Class", getArmathorArray()));
-            
-			jack_of_all_trades = library.CopyAndAdd<BlueprintFeature>("21fbafd5dc42d4d488c4d6caed46bc99", "ArmathorJackofallTrades", "");
-            jack_of_all_trades.SetNameDescription("Jack of all Trades", "The Armathor gains a +1 bonus on all skill checks.");
-            
-			fast_movement = library.Get<BlueprintFeature>("d294a5dddd0120046aae7d4eb6cbc4fc");
-            fast_movement.SetDescription("A character's land speed is faster than the norm for her race by +10 feet. This benefit applies only when they are wearing no armor, light armor, or medium armor, and not carrying a heavy load. Apply this bonus before modifying the character's speed because of any load carried or armor worn. This bonus stacks with any other bonuses to the character's land speed.");
-			
-            uncanny_dodge = library.Get<BlueprintFeature>("3c08d842e802c3e4eb19d15496145709");
-            improved_uncanny_dodge = library.Get<BlueprintFeature>("485a18c05792521459c7d06c63128c79");
+            var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
+            createSpellbook();
+            createPreciseMinstrel();
+            createArrowSongStrike();
+            createArcaneArchery();
+            createWeaponProficiency();
 
-            var evasion = library.Get<BlueprintFeature>("576933720c440aa4d8d42b0c54b77e80");
-            var improved_evasion = library.Get<BlueprintFeature>("ce96af454a6137d47b9c6a1e02e66803");
-            
-			stern_gaze = library.CopyAndAdd<BlueprintFeature>("a6d917fd5c9bee0449bd01c92e3b0308", "ArmathorSternGaze", "");
-            stern_gaze.SetNameDescription("Stern Gaze", "An Armathor skilled at sensing deception and intimidating their foes. An Armathor receives a morale bonus on all Persuasion skill checks made for intimidation and Perception checks equal to 1/2 their Armathor level (minimum +1).");
-            stern_gaze.ReplaceComponent<ContextRankConfig>(c => Helpers.SetField(c, "m_Class", getArmathorArray()));
-            
-			leaders_words = library.CopyAndAdd<BlueprintFeature>("a6d917fd5c9bee0449bd01c92e3b0308", "ArmathorLeadersWords", "");
-            leaders_words.SetNameDescription("Leader's Words", "An Armathor is skilled at speaking soothing words that keep the peace and bolster allies' resolve. An Armathor receives a morale bonus on all Persuasion skill checks (when used for diplomacy) equal to half their Armathor level (minimum +1).");
-            leaders_words.ReplaceComponent<ContextRankConfig>(c => Helpers.SetField(c, "m_Class", getArmathorArray()));
-			
-            stalwart = library.CopyAndAdd<BlueprintFeature>("ec9dbc9a5fa26e446a54fe5df6779088", "ArmathorStalwart", "");
-			
             archetype = Helpers.Create<BlueprintArchetype>(a =>
             {
                 a.name = "ArrowsongMinstrelArchetype";
-                a.LocalizedName = Helpers.CreateString($"{a.name}.Name", "Armathor");
+                a.LocalizedName = Helpers.CreateString($"{a.name}.Name", "Arrowsong Minstrel");
                 a.LocalizedDescription = Helpers.CreateString($"{a.name}.Description", "Arrowsong minstrels combine the elven traditions of archery, song, and spellcasting into a seamless harmony of dazzling magical effects.");
             });
-            Helpers.SetField(archetype, "m_ParentClass", paladin_class);
+            Helpers.SetField(archetype, "m_ParentClass", bard_class);
             library.AddAsset(archetype, "");
-            archetype.RemoveFeatures = new LevelEntry[] { Helpers.LevelEntry(1, library.Get<BlueprintFeature>("f8c91c0135d5fc3458fcc131c4b77e96")), //alignment restriction
-                                                          Helpers.LevelEntry(11, library.Get<BlueprintFeature>("9f13fdd044ccb8a439f27417481cb00e")), //mark of justice
+            archetype.RemoveFeatures = new LevelEntry[] { Helpers.LevelEntry(1, library.Get<BlueprintFeature>("fa3d3b2211a51994785d85e753f612d3")), //bard proficiencies
+                                                          Helpers.LevelEntry(2, bard_class.Progression.LevelEntries[1].Features), //well versed and versatile
+                                                          Helpers.LevelEntry(3, bard_class.Progression.LevelEntries[2].Features), //inspire competence
+                                                          Helpers.LevelEntry(6, library.Get<BlueprintFeature>("ddaec3a5845bc7d4191792529b687d65")), //fascinate
+                                                          Helpers.LevelEntry(7, library.Get<BlueprintFeature>("6d3fcfab6d935754c918eb0e004b5ef7")), //inspire competence
+                                                          Helpers.LevelEntry(8, library.Get<BlueprintFeature>("1d48ab2bded57a74dad8af3da07d313a")), //dirge of doom
+                                                          Helpers.LevelEntry(11, library.Get<BlueprintFeature>("6d3fcfab6d935754c918eb0e004b5ef7")), //inspire competence
+                                                          Helpers.LevelEntry(12, library.Get<BlueprintFeature>("546698146e02d1e4ea00581a3ea7fe58")), //soothing performance
+                                                          Helpers.LevelEntry(14, library.Get<BlueprintFeature>("cfd8940869a304f4aa9077415f93febe")), //frightening tune
+                                                          Helpers.LevelEntry(15, library.Get<BlueprintFeature>("6d3fcfab6d935754c918eb0e004b5ef7")), //inspire competence
+                                                          Helpers.LevelEntry(19, library.Get<BlueprintFeature>("6d3fcfab6d935754c918eb0e004b5ef7")), //inspire competence
                                                        };
             archetype.ReplaceSpellbook = spellbook;
-            archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, armathor_cantrips, fighter_feat, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement, uncanny_dodge, stern_gaze, leaders_words, library.Get<BlueprintFeature>("54ee847996c25cd4ba8773d7b8555174"), library.Get<BlueprintFeature>("d09b20029e9abfe4480b356c92095623")),
-                                                       Helpers.LevelEntry(2, fighter_feat),
-                                                       Helpers.LevelEntry(4, fighter_feat),
-                                                       Helpers.LevelEntry(5, evasion, improved_uncanny_dodge, stalwart),
-                                                       Helpers.LevelEntry(6, fighter_feat),
-                                                       Helpers.LevelEntry(8, fighter_feat),
-                                                       Helpers.LevelEntry(10, fighter_feat, improved_evasion),
-                                                       Helpers.LevelEntry(11, library.Get<BlueprintFeature>("d19ef94d056fd1a45bb08017b10a5e93")),
-                                                       Helpers.LevelEntry(12, fighter_feat),
-                                                       Helpers.LevelEntry(14, fighter_feat),
-                                                       Helpers.LevelEntry(16, fighter_feat),
-                                                       Helpers.LevelEntry(18, fighter_feat),
-                                                       Helpers.LevelEntry(20, fighter_feat)};
+            archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, weapon_proficiency),
+                                                       Helpers.LevelEntry(1, arcane_achery),
+                                                       Helpers.LevelEntry(2, precise_minstrel),
+                                                       Helpers.LevelEntry(6, arrowsong_strike)};
 
-            /*paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-            paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
-			
-            paladin_class.Progression.UIGroups[6].Features.Add(stern_gaze);
-            paladin_class.Progression.UIGroups[6].Features.Add(evasion);
-            paladin_class.Progression.UIGroups[6].Features.Add(improved_evasion);
-			
-            paladin_class.Progression.UIGroups[7].Features.Add(leaders_words);
-			
-            paladin_class.Progression.UIGroups[8].Features.Add(uncanny_dodge);
-            paladin_class.Progression.UIGroups[8].Features.Add(improved_uncanny_dodge);*/
+            bard_class.Progression.UIDeterminatorsGroup = bard_class.Progression.UIDeterminatorsGroup.AddToArray(weapon_proficiency);
+            bard_class.Progression.UIGroups = bard_class.Progression.UIGroups.AddToArray(Helpers.CreateUIGroup(arcane_achery, precise_minstrel, arrowsong_strike));
+            bard_class.Archetypes = bard_class.Archetypes.AddToArray(archetype);
 
-            paladin_class.Progression.UIDeterminatorsGroup = paladin_class.Progression.UIDeterminatorsGroup.AddToArray(armathor_cantrips, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement);
-            paladin_class.Progression.UIGroups = paladin_class.Progression.UIGroups.AddToArray(Helpers.CreateUIGroup(fighter_feat, uncanny_dodge, stern_gaze, leaders_words, evasion, improved_uncanny_dodge, improved_evasion, stalwart));
-            paladin_class.Archetypes = paladin_class.Archetypes.AddToArray(archetype);
 
-            archetype.ReplaceClassSkills = true;
-            archetype.ClassSkills = paladin_class.ClassSkills.AddToArray(StatType.SkillAthletics, StatType.SkillMobility, StatType.SkillThievery, StatType.SkillStealth, StatType.SkillKnowledgeArcana, StatType.SkillKnowledgeWorld, StatType.SkillLoreNature, StatType.SkillLoreReligion, StatType.SkillPerception, StatType.SkillPersuasion, StatType.SkillUseMagicDevice);
+            archetype.ReplaceStartingEquipment = true;
+            var starting_items = library.Get<BlueprintArchetype>("44388c01eb4a29d4d90a25cc0574320d").StartingItems; //from eldritch archer
+            //replace scroll of snowball with cure light wounds
+            archetype.StartingItems = starting_items.RemoveFromArray(library.Get<BlueprintItemEquipmentUsable>("66fc961f9c39ae94fb87a79adc87212e")).AddToArray(library.Get<BlueprintItemEquipmentUsable>("cd635d5720937b044a354dba17abad8d"));
+            addToPrestigeClasses();
         }
 
 
-        static BlueprintCharacterClass[] getArmathorArray()
+        static void addToPrestigeClasses()
         {
-            var paladin_class = library.Get<BlueprintCharacterClass>("bfa11238e7ae3544bbeb4d0b92e897ec");
-            return new BlueprintCharacterClass[] { paladin_class };
+            var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
+
+            //add check against arrowsong minstrel archetype for exisitng bard spellbooks
+            var selections_to_fix = new BlueprintFeatureSelection[] {Common.EldritchKnightSpellbookSelection,
+                                                                     Common.ArcaneTricksterSelection,
+                                                                     Common.MysticTheurgeArcaneSpellbookSelection,
+                                                                     Common.DragonDiscipleSpellbookSelection,
+                                                                    };
+            foreach (var s in selections_to_fix)
+            {
+                foreach (var f in s.AllFeatures)
+                {
+                    if (f.GetComponents<PrerequisiteClassSpellLevel>().Where(c => c.CharacterClass == bard_class).Count() > 0)
+                    {
+                        f.AddComponent(Common.prerequisiteNoArchetype(bard_class, archetype));
+                    }
+                }
+            }
+
+
+            Common.addReplaceSpellbook(Common.EldritchKnightSpellbookSelection, spellbook, "EldritchKnightArrowsongMinstrel",
+                                       Common.createPrerequisiteClassSpellLevel(bard_class, 3),
+                                       Common.createPrerequisiteArchetypeLevel(bard_class, archetype, 1));
+
+            Common.addReplaceSpellbook(Common.ArcaneTricksterSelection, spellbook, "ArcaneTricksterArrowsongMinstrel",
+                                       Common.createPrerequisiteClassSpellLevel(bard_class, 2),
+                                       Common.createPrerequisiteArchetypeLevel(bard_class, archetype, 1));
+
+            Common.addReplaceSpellbook(Common.MysticTheurgeArcaneSpellbookSelection, spellbook, "MysticTheurgeArrowosngMinstrel",
+                                       Common.createPrerequisiteClassSpellLevel(bard_class, 2),
+                                       Common.createPrerequisiteArchetypeLevel(bard_class, archetype, 1));
+
+            Common.addReplaceSpellbook(Common.DragonDiscipleSpellbookSelection, spellbook, "DragonDiscipleArrowosngMinstrel",
+                                       Common.createPrerequisiteClassSpellLevel(bard_class, 1),
+                                       Common.createPrerequisiteArchetypeLevel(bard_class, archetype, 1));
+        }
+
+
+        static void createWeaponProficiency()
+        {
+            weapon_proficiency = library.CopyAndAdd<BlueprintFeature>("fa3d3b2211a51994785d85e753f612d3", "ArrowsongMinstrelProficiencies", "");
+            weapon_proficiency.ReplaceComponent<AddProficiencies>(a => a.WeaponProficiencies = new WeaponCategory[] { WeaponCategory.Shortbow, WeaponCategory.Longbow });
+            weapon_proficiency.SetNameDescriptionIcon("Arrowsong Minstrel Proficiencies",
+                                                      "An Arrowsong minstrel is proficient with longbows, but not the longsword and rapier.",
+                                                      library.Get<BlueprintAbility>("3e9d1119d43d07c4c8ba9ebfd1671952").Icon);//gravity bow
+        }
+
+        static void createArcaneArchery()
+        {
+            var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
+            var icon = library.Get<BlueprintAbility>("9a46dfd390f943647ab4395fc997936d").Icon; //acid arrow
+
+            arcane_achery = Helpers.CreateFeature("ArrowsongMinstrelArcaneArcheryFeature",
+                                                  "Arcane Archery",
+                                                  "An Arrowsong minstrel’s skill at ranged martial arts allows her to learn to cast a number of powerful, offensive spells that would otherwise be unavailable to her.\n"
+                                                  + "Arrowsong Minstrel adds following spells to her spell list: acid arrow, flame arrow, hurricane bow, greater magic weapon, magic weapon, protection from arrows, snowball, true strike, and sorcerer/wizard spells of the evocation school. An Arrowsong minstrel must still select these spells as spells known before she can cast them.\n"
+                                                  + "In addition, for the purpose of meeting the requirements of combat feats and prestige classes, an Arrowsong minstrel treats her bard level as her base attack bonus (in addition to base attack bonuses gained from other classes and Hit Dice).\n"
+                                                  + "An Arrowsong minstrel casts one fewer spell of each level than normal. If this reduces the number to 0, she can cast spells of that level only if her Charisma score allows bonus spells of that level.",
+                                                  "",
+                                                  icon,
+                                                  FeatureGroup.None,
+                                                  Common.createReplace34BabWithClassLevel(bard_class)
+                                                  );
+        }
+
+
+        static void createArrowSongStrike()
+        {
+            var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
+            var add_spell_combat = Helpers.Create<AddMagusMechanicPart>(); //needed for unit_part magus creation (no actual ability though)
+            Helpers.SetField(add_spell_combat, "m_Feature", 1);
+            Helpers.SetField(add_spell_combat, "m_MagusClass", bard_class);
+
+            var add_eldritch_archer = Helpers.Create<AddMagusMechanicPart>();
+            Helpers.SetField(add_eldritch_archer, "m_Feature", 5);
+
+            var add_spellstrike = Helpers.Create<AddMagusMechanicPart>();
+            Helpers.SetField(add_spellstrike, "m_Feature", 2);
+
+            var spellstrike = library.CopyAndAdd<BlueprintActivatableAbility>("e958891ef90f7e142a941c06c811181e", "ArrowsongMinstrelSpellstrike", "");
+            spellstrike.SetName("Arrowsong Strike");
+            spellstrike.SetDescription("At 6th level, an Arrowsong minstrel can use spellstrike (as per the magus class feature) to cast a single-target ranged touch attack spell and deliver it through a ranged weapon attack.");
+            spellstrike.SetIcon(NewSpells.flame_arrow.Icon);
+            arrowsong_strike = Common.ActivatableAbilityToFeature(spellstrike, false);
+            arrowsong_strike.AddComponents(add_spell_combat, add_eldritch_archer, add_spellstrike);
+        }
+
+
+        static void createPreciseMinstrel()
+        {
+            var precise_shot = library.Get<BlueprintFeature>("8f3d1e6b4be006f4d896081f2f889665");
+
+            precise_minstrel = Helpers.CreateFeature("PreciseMinstrelFeature",
+                                                     "Precise Minstrel",
+                                                     "At 2nd level, an Arrowsong minstrel gains Precise Shot as a bonus feat. In addition, any creature that is affected by any of the Arrowsong minstrel’s bardic performance does not provide soft cover to enemies against her ranged attacks with a bow.",
+                                                     "",
+                                                     precise_shot.Icon,
+                                                     FeatureGroup.None,
+                                                     Helpers.CreateAddFact(precise_shot)
+                                                     );
         }
 
 
         static void createSpellbook()
         {
-            var cleric_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("67819271767a9dd4fbfd4ae700befea0");
-            var sorcerer_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("b3a505fb61437dc4097f43c3f8f9a4cf");
-            var wizard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("ba34257984f4c41408ce1dc2004e342e");
-            var magus_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("45a4607686d96a1498891b3286121780");
-            var paladin_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("bfa11238e7ae3544bbeb4d0b92e897ec");
-            var rogue_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("299aa766dee3cbf4790da4efb8c72484");
             var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
-            var ranger_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("cda0615668a6df14eb36ba19ee881af6");
-
+            var paladin_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("bfa11238e7ae3544bbeb4d0b92e897ec");
+            var wizard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("ba34257984f4c41408ce1dc2004e342e");
             spellbook = Helpers.Create<BlueprintSpellbook>();
-            spellbook.name = "ArmathorSpellbook";
+            spellbook.name = "ArrowsongMinstrelSpellbook";
             library.AddAsset(spellbook, "");
-            spellbook.Name = Helpers.CreateString("ArmathorSpellbook.Name", "Armathor");
+            spellbook.Name = Helpers.CreateString("ArrowsongMinstrelSpellbook.Name", "Arrowsong Minstrel");
+            spellbook.SpellsPerDay = Common.increaseNumSpellsCast("ArrowsongMinstrellSpellPerDay", "", bard_class.Spellbook.SpellsPerDay, -1);
             spellbook.SpellsKnown = bard_class.Spellbook.SpellsKnown;
             spellbook.Spontaneous = true;
-            spellbook.IsArcane = false;
+            spellbook.IsArcane = true;
             spellbook.AllSpellsKnown = true;
             spellbook.CanCopyScrolls = false;
-            spellbook.CastingAttribute = StatType.Wisdom;
+            spellbook.CastingAttribute = StatType.Charisma;
             spellbook.CharacterClass = bard_class;
             spellbook.CasterLevelModifier = 0;
             spellbook.CantripsType = bard_class.Spellbook.CantripsType;
-            spellbook.SpellsPerDay =  Common.createSpellsTable("ArmathorSpellsPerDay", "",
-                                                                       Common.createSpellsLevelEntry(),  //0
-                                                                       Common.createSpellsLevelEntry(0, 2),  //1
-                                                                       Common.createSpellsLevelEntry(0, 4),  //2
-                                                                       Common.createSpellsLevelEntry(0, 4, 2),  //3
-                                                                       Common.createSpellsLevelEntry(0, 6, 4), //4
-                                                                       Common.createSpellsLevelEntry(0, 6, 4, 2), //5
-                                                                       Common.createSpellsLevelEntry(0, 6, 6, 4), //6
-                                                                       Common.createSpellsLevelEntry(0, 8, 6, 4, 2), //7
-                                                                       Common.createSpellsLevelEntry(0, 8, 6, 6, 4), //8
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 6, 4, 2), //9
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 6, 4, 4), //10
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 6, 4, 2), //11
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 6, 6, 4), //12
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 6, 4, 2), //13
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 6, 6, 4), //14
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 8, 6, 4, 2), //15
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 8, 6, 6, 4), //16
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 8, 8, 6, 4, 2), //17
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 8, 8, 6, 6, 4), //18
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 8, 8, 8, 6, 6), //19
-                                                                       Common.createSpellsLevelEntry(0, 8, 8, 8, 8, 4, 8, 8, 8, 8) //20
-                                                                       );
 
             spellbook.SpellList = Helpers.Create<BlueprintSpellList>();
-            spellbook.SpellList.name = "ArmathorSpellList";
+            spellbook.SpellList.name = "ArrowsongMinstrelSpellList";
             library.AddAsset(spellbook.SpellList, "");
             spellbook.SpellList.SpellsByLevel = new SpellLevelList[10];
 
@@ -242,8 +249,31 @@ namespace CallOfTheWild.Archetypes
             }
             spellbook.SpellList.SpellsByLevel[0].SpellLevel = 0;
 
-            //add cleric spells      
-            foreach (var spell_level_list in cleric_class.Spellbook.SpellList.SpellsByLevel)
+            BlueprintAbility[] extra_spells = new BlueprintAbility[]
+            {
+                 library.Get<BlueprintAbility>("9f10909f0be1f5141bf1c102041f93d9"), //snow ball
+                 library.Get<BlueprintAbility>("3e9d1119d43d07c4c8ba9ebfd1671952"), //gravity bow
+                 library.Get<BlueprintAbility>("2c38da66e5a599347ac95b3294acbe00"), //true strike
+                 NewSpells.magic_weapon,
+                 NewSpells.magic_weapon_greater,
+                 library.Get<BlueprintAbility>("c28de1f98a3f432448e52e5d47c73208"), //protection from arrows
+                 library.Get<BlueprintAbility>("9a46dfd390f943647ab4395fc997936d"), //acid arrow
+                 NewSpells.flame_arrow
+            };
+            //add paladin spells      
+            foreach (var spell_level_list in paladin_class.Spellbook.SpellList.SpellsByLevel)
+            {
+                int sp_level = spell_level_list.SpellLevel;
+                foreach (var spell in spell_level_list.Spells)
+                {
+                    if (!spell.IsInSpellList(spellbook.SpellList))
+                    {
+                        ExtensionMethods.AddToSpellList(spell, spellbook.SpellList, sp_level);
+                    }
+                }
+            }
+            //add ranger spells      
+            foreach (var spell_level_list in bard_class.Spellbook.SpellList.SpellsByLevel)
             {
                 int sp_level = spell_level_list.SpellLevel;
                 foreach (var spell in spell_level_list.Spells)
@@ -258,32 +288,17 @@ namespace CallOfTheWild.Archetypes
             foreach (var spell_level_list in wizard_class.Spellbook.SpellList.SpellsByLevel)
             {
                 int sp_level = spell_level_list.SpellLevel;
-                foreach (var spell in spell_level_list.Spells)
+                if (sp_level > 6)
                 {
-                    if (!spell.IsInSpellList(spellbook.SpellList))
-                    {
-                        ExtensionMethods.AddToSpellList(spell, spellbook.SpellList, sp_level);
-                    }
+                    continue;
                 }
-            }
-            //add magus spells      
-            foreach (var spell_level_list in magus_class.Spellbook.SpellList.SpellsByLevel)
-            {
-                int sp_level = spell_level_list.SpellLevel;
+
                 foreach (var spell in spell_level_list.Spells)
                 {
-                    if (!spell.IsInSpellList(spellbook.SpellList))
+                    if (spell.School != SpellSchool.Evocation && !extra_spells.Contains(spell))
                     {
-                        ExtensionMethods.AddToSpellList(spell, spellbook.SpellList, sp_level);
+                        continue;
                     }
-                }
-            }
-            //add paladin spells      
-            foreach (var spell_level_list in paladin_class.Spellbook.SpellList.SpellsByLevel)
-            {
-                int sp_level = spell_level_list.SpellLevel;
-                foreach (var spell in spell_level_list.Spells)
-                {
                     if (!spell.IsInSpellList(spellbook.SpellList))
                     {
                         ExtensionMethods.AddToSpellList(spell, spellbook.SpellList, sp_level);

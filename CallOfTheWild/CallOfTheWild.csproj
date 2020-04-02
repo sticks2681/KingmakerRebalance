@@ -126,8 +126,10 @@
     <Compile Include="AiFix.cs" />
     <Compile Include="AnimalCompanionInventory.cs" />
     <Compile Include="AnimalCompanionLevelUp.cs" />
+    <Compile Include="Archetypes\Armathor.cs" />
     <Compile Include="Archetypes\ArrowsongMinstrel.cs" />
     <Compile Include="Archetypes\Evangelist.cs" />
+    <Compile Include="Archetypes\Feywarden.cs" />
     <Compile Include="Archetypes\PrimalSorcerer.cs" />
     <Compile Include="Archetypes\SpiritWhisperer.cs" />
     <Compile Include="Archetypes\StormDruid.cs" />
