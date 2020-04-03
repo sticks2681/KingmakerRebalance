@@ -61,6 +61,9 @@ namespace CallOfTheWild.Archetypes
         static public BlueprintFeature arrowsong_strike;
         static public BlueprintFeature arcane_achery;
         static public BlueprintFeature weapon_proficiency;
+		
+        static public BlueprintFeature solo_tactics;
+        static public BlueprintFeatureSelection teamwork_feat;
 
         static LibraryScriptableObject library => Main.library;
 
@@ -73,6 +76,12 @@ namespace CallOfTheWild.Archetypes
             createArrowSongStrike();
             createArcaneArchery();
             createWeaponProficiency();
+			
+            solo_tactics = library.CopyAndAdd<BlueprintFeature>("5602845cd22683840a6f28ec46331051", "ArrowsongMinstrelSoloTactics", "");
+            
+			teamwork_feat = library.CopyAndAdd<BlueprintFeatureSelection>("d87e2f6a9278ac04caeb0f93eff95fcb", "ArrowsongMinstrelTeamworkFeat", "");
+            teamwork_feat.SetDescription("At 3rd level and every 6 levels thereafter, an Arrowsong Minstrel gains a bonus feat in addition to those gained from normal advancement. These bonus feats must be selected from those listed as teamwork feats.\n"
+                                         +"The Arrowsong Minstrel must meet the prerequisites of the selected bonus feat.");
 
             archetype = Helpers.Create<BlueprintArchetype>(a =>
             {
@@ -98,7 +107,12 @@ namespace CallOfTheWild.Archetypes
             archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, weapon_proficiency),
                                                        Helpers.LevelEntry(1, arcane_achery),
                                                        Helpers.LevelEntry(2, precise_minstrel),
-                                                       Helpers.LevelEntry(6, arrowsong_strike)};
+                                                       Helpers.LevelEntry(3, solo_tactics, teamwork_feat),
+                                                       Helpers.LevelEntry(6, arrowsong_strike, teamwork_feat),
+                                                       Helpers.LevelEntry(9, teamwork_feat),
+                                                       Helpers.LevelEntry(12, teamwork_feat),
+                                                       Helpers.LevelEntry(15, teamwork_feat),
+                                                       Helpers.LevelEntry(18, teamwork_feat)};
 
             bard_class.Progression.UIDeterminatorsGroup = bard_class.Progression.UIDeterminatorsGroup.AddToArray(weapon_proficiency);
             bard_class.Progression.UIGroups = bard_class.Progression.UIGroups.AddToArray(Helpers.CreateUIGroup(arcane_achery, precise_minstrel, arrowsong_strike));
@@ -221,22 +235,23 @@ namespace CallOfTheWild.Archetypes
         static void createSpellbook()
         {
             var bard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("772c83a25e2268e448e841dcd548235f");
+            var magus_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("45a4607686d96a1498891b3286121780");
             var paladin_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("bfa11238e7ae3544bbeb4d0b92e897ec");
             var wizard_class = ResourcesLibrary.TryGetBlueprint<BlueprintCharacterClass>("ba34257984f4c41408ce1dc2004e342e");
             spellbook = Helpers.Create<BlueprintSpellbook>();
             spellbook.name = "ArrowsongMinstrelSpellbook";
             library.AddAsset(spellbook, "");
             spellbook.Name = Helpers.CreateString("ArrowsongMinstrelSpellbook.Name", "Arrowsong Minstrel");
-            spellbook.SpellsPerDay = Common.increaseNumSpellsCast("ArrowsongMinstrellSpellPerDay", "", bard_class.Spellbook.SpellsPerDay, -1);
-            spellbook.SpellsKnown = bard_class.Spellbook.SpellsKnown;
+            spellbook.SpellsPerDay = Common.increaseNumSpellsCast("ArrowsongMinstrellSpellPerDay", "", magus_class.Spellbook.SpellsPerDay, -1);
+            spellbook.SpellsKnown = magus_class.Spellbook.SpellsKnown;
             spellbook.Spontaneous = true;
             spellbook.IsArcane = true;
             spellbook.AllSpellsKnown = true;
             spellbook.CanCopyScrolls = false;
             spellbook.CastingAttribute = StatType.Charisma;
-            spellbook.CharacterClass = bard_class;
+            spellbook.CharacterClass = magus_class;
             spellbook.CasterLevelModifier = 0;
-            spellbook.CantripsType = bard_class.Spellbook.CantripsType;
+            spellbook.CantripsType = magus_class.Spellbook.CantripsType;
 
             spellbook.SpellList = Helpers.Create<BlueprintSpellList>();
             spellbook.SpellList.name = "ArrowsongMinstrelSpellList";
@@ -260,6 +275,18 @@ namespace CallOfTheWild.Archetypes
                  library.Get<BlueprintAbility>("9a46dfd390f943647ab4395fc997936d"), //acid arrow
                  NewSpells.flame_arrow
             };
+            //add bard spells      
+            foreach (var spell_level_list in bard_class.Spellbook.SpellList.SpellsByLevel)
+            {
+                int sp_level = spell_level_list.SpellLevel;
+                foreach (var spell in spell_level_list.Spells)
+                {
+                    if (!spell.IsInSpellList(spellbook.SpellList))
+                    {
+                        ExtensionMethods.AddToSpellList(spell, spellbook.SpellList, sp_level);
+                    }
+                }
+            }
             //add paladin spells      
             foreach (var spell_level_list in paladin_class.Spellbook.SpellList.SpellsByLevel)
             {

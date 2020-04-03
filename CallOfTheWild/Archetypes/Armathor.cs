@@ -69,6 +69,8 @@ namespace CallOfTheWild.Archetypes
         static public BlueprintFeature stern_gaze;
         static public BlueprintFeature leaders_words;
         static public BlueprintFeature stalwart;
+        static public BlueprintFeature solo_tactics;
+        static public BlueprintFeatureSelection teamwork_feat;
 		
 		static LibraryScriptableObject library => Main.library;
 
@@ -120,6 +122,12 @@ namespace CallOfTheWild.Archetypes
 			
             stalwart = library.CopyAndAdd<BlueprintFeature>("ec9dbc9a5fa26e446a54fe5df6779088", "ArmathorStalwart", "");
 			
+            solo_tactics = library.CopyAndAdd<BlueprintFeature>("5602845cd22683840a6f28ec46331051", "ArmathorSoloTactics", "");
+            
+			teamwork_feat = library.CopyAndAdd<BlueprintFeatureSelection>("d87e2f6a9278ac04caeb0f93eff95fcb", "ArmathorTeamworkFeat", "");
+            teamwork_feat.SetDescription("At 3rd level and every 6 levels thereafter, an Armathor gains a bonus feat in addition to those gained from normal advancement. These bonus feats must be selected from those listed as teamwork feats.\n"
+                                         +"The Armathor must meet the prerequisites of the selected bonus feat.");
+			
             archetype = Helpers.Create<BlueprintArchetype>(a =>
             {
                 a.name = "ArmathorArchetype";
@@ -134,16 +142,19 @@ namespace CallOfTheWild.Archetypes
             archetype.ReplaceSpellbook = spellbook;
             archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, armathor_cantrips, fighter_feat, all_around_vision, awareness, perfect_memory, jack_of_all_trades, fast_movement, uncanny_dodge, stern_gaze, leaders_words, library.Get<BlueprintFeature>("54ee847996c25cd4ba8773d7b8555174"), library.Get<BlueprintFeature>("d09b20029e9abfe4480b356c92095623")),
                                                        Helpers.LevelEntry(2, fighter_feat),
+                                                       Helpers.LevelEntry(3, solo_tactics, teamwork_feat),
                                                        Helpers.LevelEntry(4, fighter_feat),
                                                        Helpers.LevelEntry(5, evasion, improved_uncanny_dodge, stalwart),
-                                                       Helpers.LevelEntry(6, fighter_feat),
+                                                       Helpers.LevelEntry(6, fighter_feat, teamwork_feat),
                                                        Helpers.LevelEntry(8, fighter_feat),
+                                                       Helpers.LevelEntry(9, teamwork_feat),
                                                        Helpers.LevelEntry(10, fighter_feat, improved_evasion),
                                                        Helpers.LevelEntry(11, library.Get<BlueprintFeature>("d19ef94d056fd1a45bb08017b10a5e93")),
-                                                       Helpers.LevelEntry(12, fighter_feat),
+                                                       Helpers.LevelEntry(12, fighter_feat, teamwork_feat),
                                                        Helpers.LevelEntry(14, fighter_feat),
+                                                       Helpers.LevelEntry(15, teamwork_feat),
                                                        Helpers.LevelEntry(16, fighter_feat),
-                                                       Helpers.LevelEntry(18, fighter_feat),
+                                                       Helpers.LevelEntry(18, fighter_feat, teamwork_feat),
                                                        Helpers.LevelEntry(20, fighter_feat)};
 
             /*paladin_class.Progression.UIGroups[5].Features.Add(fighter_feat);
@@ -198,15 +209,15 @@ namespace CallOfTheWild.Archetypes
             spellbook.name = "ArmathorSpellbook";
             library.AddAsset(spellbook, "");
             spellbook.Name = Helpers.CreateString("ArmathorSpellbook.Name", "Armathor");
-            spellbook.SpellsKnown = bard_class.Spellbook.SpellsKnown;
+            spellbook.SpellsKnown = magus_class.Spellbook.SpellsKnown;
             spellbook.Spontaneous = true;
             spellbook.IsArcane = false;
             spellbook.AllSpellsKnown = true;
             spellbook.CanCopyScrolls = false;
             spellbook.CastingAttribute = StatType.Wisdom;
-            spellbook.CharacterClass = bard_class;
+            spellbook.CharacterClass = magus_class;
             spellbook.CasterLevelModifier = 0;
-            spellbook.CantripsType = bard_class.Spellbook.CantripsType;
+            spellbook.CantripsType = magus_class.Spellbook.CantripsType;
             spellbook.SpellsPerDay =  Common.createSpellsTable("ArmathorSpellsPerDay", "",
                                                                        Common.createSpellsLevelEntry(),  //0
                                                                        Common.createSpellsLevelEntry(0, 2),  //1

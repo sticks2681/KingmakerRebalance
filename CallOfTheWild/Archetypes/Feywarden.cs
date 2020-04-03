@@ -12,6 +12,8 @@ namespace CallOfTheWild.Archetypes
 
         static public BlueprintSpellbook spellbook;
         static public BlueprintFeatureSelection fighter_feat;
+        static public BlueprintFeature solo_tactics;
+        static public BlueprintFeatureSelection teamwork_feat;
 
         static LibraryScriptableObject library => Main.library;
 
@@ -21,8 +23,14 @@ namespace CallOfTheWild.Archetypes
             
 			createSpellbook();
             
-			fighter_feat = library.CopyAndAdd<BlueprintFeatureSelection>("41c8486641f7d6d4283ca9dae4147a9f", "FeywardenBonusFeat", "Test.");
-            fighter_feat.SetDescription("Test.");
+			fighter_feat = library.CopyAndAdd<BlueprintFeatureSelection>("41c8486641f7d6d4283ca9dae4147a9f", "FeywardenBonusFeat", "");
+            fighter_feat.SetDescription("A Feywarden gains a bonus feat in addition to those gained from normal advancement. These bonus feats must be selected from those listed as combat feats.");
+			
+            solo_tactics = library.CopyAndAdd<BlueprintFeature>("5602845cd22683840a6f28ec46331051", "FeywardenSoloTactics", "");
+            
+			teamwork_feat = library.CopyAndAdd<BlueprintFeatureSelection>("d87e2f6a9278ac04caeb0f93eff95fcb", "FeywardenTeamworkFeat", "");
+            teamwork_feat.SetDescription("At 3rd level and every 6 levels thereafter, a Feywarden gains a bonus feat in addition to those gained from normal advancement. These bonus feats must be selected from those listed as teamwork feats.\n"
+                                         +"The Feywarden must meet the prerequisites of the selected bonus feat.");
 
             archetype = Helpers.Create<BlueprintArchetype>(a =>
             {
@@ -40,12 +48,12 @@ namespace CallOfTheWild.Archetypes
                                                        };
 
             archetype.AddFeatures = new LevelEntry[] { Helpers.LevelEntry(1, fighter_feat),
-                                                       Helpers.LevelEntry(3, fighter_feat),
-                                                       Helpers.LevelEntry(6, fighter_feat),
-                                                       Helpers.LevelEntry(9, fighter_feat),
-                                                       Helpers.LevelEntry(12, fighter_feat),
-                                                       Helpers.LevelEntry(15, fighter_feat),
-                                                       Helpers.LevelEntry(18, fighter_feat),
+                                                       Helpers.LevelEntry(3, fighter_feat, solo_tactics, teamwork_feat),
+                                                       Helpers.LevelEntry(6, fighter_feat, teamwork_feat),
+                                                       Helpers.LevelEntry(9, fighter_feat, teamwork_feat),
+                                                       Helpers.LevelEntry(12, fighter_feat, teamwork_feat),
+                                                       Helpers.LevelEntry(15, fighter_feat, teamwork_feat),
+                                                       Helpers.LevelEntry(18, fighter_feat, teamwork_feat),
                                                        Helpers.LevelEntry(20, fighter_feat)
 													 };
 
